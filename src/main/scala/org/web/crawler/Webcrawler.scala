@@ -13,7 +13,8 @@ import scala.concurrent.Future
 import scala.concurrent.duration._
 
 object Webcrawler extends JsonSupport {
-  val timeout = 300.millis
+  val timeOut = 300.millis
+  val NOT_FOUND = 404
   val crawl: Route = path("crawl") {
     post {
       extractActorSystem { implicit actorSystem =>
@@ -25,23 +26,14 @@ object Webcrawler extends JsonSupport {
 
 
                     Http().singleRequest(HttpRequest(uri = url)).flatMap { (response: HttpResponse) =>
-                      response.status.intValue() match {
 
-                        case 404 => response.entity.toStrict(timeout).flatMap(
-                          httpEntity => {
-                            val eventualString = Unmarshal(httpEntity).to[String]
-                            eventualString.map(_ => Left(s"$url is not found"))
-                          }
-                        )
-
-                        case _ =>
-                          response.entity.toStrict(timeout).flatMap(
+                          response.entity.toStrict(timeOut).flatMap(
                             httpEntity => {
                               val eventualString = Unmarshal(httpEntity).to[String]
                               eventualString.map(page => Right(URLData(url, page )))
                             }
                           )
-                      }
+
                     } recover { case e : Throwable =>
                       Left(s"$url error out because ${e.getMessage}")
                     }
@@ -68,8 +60,8 @@ object Webcrawler extends JsonSupport {
 
 trait JsonSupport extends SprayJsonSupport with DefaultJsonProtocol {
   implicit val requestFormat: RootJsonFormat[Request] = jsonFormat1(Request)
-  implicit val itemFormat: RootJsonFormat[URLData] = jsonFormat2(URLData)
-  implicit val orderFormat: RootJsonFormat[Response] = jsonFormat2(Response)
+  implicit val urlDataFormat: RootJsonFormat[URLData] = jsonFormat2(URLData)
+  implicit val responseFormat: RootJsonFormat[Response] = jsonFormat2(Response)
 }
 
 case class Request(urls: immutable.Seq[String])

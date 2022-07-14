@@ -1,9 +1,11 @@
-ThisBuild / version := "0.1.0-SNAPSHOT"
+
+ThisBuild / version := "0.1.0"
 
 ThisBuild / scalaVersion := "2.13.8"
 lazy val akkaHttpVersion = "10.2.9"
 lazy val akkaVersion = "2.5.32"
 lazy val root = (project in file("."))
+  .enablePlugins(DockerPlugin, JavaAppPackaging)
   .settings(
     name := "webcrawler",
     libraryDependencies ++= List(
